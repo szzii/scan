@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner SDK Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            color: #555;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        select, input, button {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status.scanning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .progress-container {
+            margin: 15px 0;
+        }
+
+        progress {
+            width: 100%;
+            height: 30px;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 5px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .scanner-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .scanner-item {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .scanner-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+        }
+
+        .scanner-item.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .scanner-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .scanner-info {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .result-item {
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .result-item img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .result-info {
+            padding: 10px;
+            background: #f9f9f9;
+            font-size: 0.85em;
+            text-align: center;
+        }
+
+        .log {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+        }
+
+        .log-time {
+            color: #808080;
+        }
+
+        .log-info {
+            color: #4ec9b0;
+        }
+
+        .log-error {
+            color: #f48771;
+        }
+
+        .log-success {
+            color: #b5cea8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🖨️ Scanner SDK Demo</h1>
+        <p class="subtitle">JavaScript SDK 使用示例</p>
+
+        <!-- Connection Status -->
+        <div id="status" class="status disconnected">
+            ⚫ 未连接
+        </div>
+
+        <!-- Scanner List -->
+        <div class="section">
+            <h2>1. 选择扫描仪</h2>
+            <button onclick="loadScanners()">🔄 刷新扫描仪列表</button>
+            <div id="scannerList" class="scanner-list" style="margin-top: 15px;">
+                <p style="color: #999;">点击"刷新扫描仪列表"加载扫描仪...</p>
+            </div>
+        </div>
+
+        <!-- Scan Parameters -->
+        <div class="section">
+            <h2>2. 配置扫描参数</h2>
+            <div class="form-group">
+                <label>分辨率 (DPI)</label>
+                <select id="resolution">
+                    <option value="75">75 DPI</option>
+                    <option value="100">100 DPI</option>
+                    <option value="150">150 DPI</option>
+                    <option value="200">200 DPI</option>
+                    <option value="300" selected>300 DPI</option>
+                    <option value="600">600 DPI</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>颜色模式</label>
+                <select id="colorMode">
+                    <option value="Color" selected>彩色</option>
+                    <option value="Grayscale">灰度</option>
+                    <option value="BlackAndWhite">黑白</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>输出格式</label>
+                <select id="format">
+                    <option value="JPEG" selected>JPEG</option>
+                    <option value="PNG">PNG</option>
+                    <option value="TIFF">TIFF</option>
+                    <option value="BMP">BMP</option>
+                    <option value="PDF">PDF</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="useFeeder" style="width: auto; margin-right: 10px;">
+                    使用自动进纸器 (ADF)
+                </label>
+            </div>
+        </div>
+
+        <!-- Scan Controls -->
+        <div class="section">
+            <h2>3. 开始扫描</h2>
+            <button id="scanBtn" onclick="startScan()" disabled>🚀 开始扫描</button>
+
+            <div id="progressContainer" class="progress-container" style="display: none;">
+                <progress id="progress" value="0" max="100"></progress>
+                <div id="progressText" class="progress-text">0%</div>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div class="section" id="resultsSection" style="display: none;">
+            <h2>4. 扫描结果</h2>
+            <div id="results" class="results-grid"></div>
+        </div>
+
+        <!-- Log -->
+        <div class="section">
+            <h2>📋 日志</h2>
+            <div id="log" class="log"></div>
+        </div>
+    </div>
+
+    <script src="scanner-sdk.js"></script>
+    <script>
+        // 初始化SDK客户端
+        const SERVER_URL = 'http://localhost:8080';  // 修改为你的服务器地址
+        const client = new ScannerClient(SERVER_URL);
+
+        let selectedScanner = null;
+        let scanners = [];
+
+        // UI元素
+        const statusEl = document.getElementById('status');
+        const scanBtn = document.getElementById('scanBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progress');
+        const progressText = document.getElementById('progressText');
+        const resultsSection = document.getElementById('resultsSection');
+        const resultsEl = document.getElementById('results');
+
+        // 日志函数
+        function log(message, type = 'info') {
+            const logEl = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            const className = `log-${type}`;
+
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-time">[${time}]</span> <span class="${className}">${message}</span>`;
+
+            logEl.appendChild(entry);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        // 监听连接状态
+        client.on('connected', () => {
+            statusEl.className = 'status connected';
+            statusEl.textContent = '🟢 已连接';
+            log('WebSocket connected', 'success');
+        });
+
+        client.on('disconnected', () => {
+            statusEl.className = 'status disconnected';
+            statusEl.textContent = '🔴 已断开';
+            log('WebSocket disconnected', 'error');
+        });
+
+        client.on('error', (error) => {
+            log('Error: ' + error, 'error');
+        });
+
+        // 监听扫描任务更新
+        client.on('job_status', (job) => {
+            log(`Job ${job.id}: ${job.status} (${job.progress || 0}%)`);
+
+            if (job.status === 'processing') {
+                progressContainer.style.display = 'block';
+                progressBar.value = job.progress;
+                progressText.textContent = `${job.progress}%`;
+            } else if (job.status === 'completed') {
+                progressContainer.style.display = 'none';
+                scanBtn.disabled = false;
+                statusEl.className = 'status connected';
+                statusEl.textContent = '🟢 已连接';
+
+                log(`Scan completed! ${job.results.length} page(s)`, 'success');
+                displayResults(job.results);
+            } else if (job.status === 'failed') {
+                progressContainer.style.display = 'none';
+                scanBtn.disabled = false;
+                statusEl.className = 'status connected';
+                statusEl.textContent = '🟢 已连接';
+                log('Scan failed: ' + job.error, 'error');
+                alert('扫描失败: ' + job.error);
+            }
+        });
+
+        // 加载扫描仪列表
+        async function loadScanners() {
+            log('Loading scanners...');
+
+            try {
+                scanners = await client.listScanners();
+                log(`Found ${scanners.length} scanner(s)`, 'success');
+
+                const listEl = document.getElementById('scannerList');
+                if (scanners.length === 0) {
+                    listEl.innerHTML = '<p style="color: #999;">未找到扫描仪</p>';
+                    return;
+                }
+
+                listEl.innerHTML = scanners.map((scanner, index) => `
+                    <div class="scanner-item" onclick="selectScanner(${index})" id="scanner-${index}">
+                        <div class="scanner-name">${scanner.name}</div>
+                        <div class="scanner-info">
+                            ${scanner.manufacturer}<br>
+                            Status: ${scanner.status}
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                log('Failed to load scanners: ' + error.message, 'error');
+                alert('加载扫描仪失败: ' + error.message);
+            }
+        }
+
+        // 选择扫描仪
+        function selectScanner(index) {
+            selectedScanner = scanners[index];
+
+            // 更新UI
+            document.querySelectorAll('.scanner-item').forEach(el => {
+                el.classList.remove('selected');
+            });
+            document.getElementById(`scanner-${index}`).classList.add('selected');
+
+            scanBtn.disabled = false;
+            log('Selected: ' + selectedScanner.name);
+        }
+
+        // 开始扫描
+        async function startScan() {
+            if (!selectedScanner) {
+                alert('请先选择扫描仪');
+                return;
+            }
+
+            // 获取参数
+            const parameters = {
+                resolution: parseInt(document.getElementById('resolution').value),
+                color_mode: document.getElementById('colorMode').value,
+                format: document.getElementById('format').value,
+                use_feeder: document.getElementById('useFeeder').checked
+            };
+
+            log(`Starting scan with ${selectedScanner.name}...`);
+            log(`Parameters: ${JSON.stringify(parameters)}`);
+
+            try {
+                scanBtn.disabled = true;
+                statusEl.className = 'status scanning';
+                statusEl.textContent = '⚙️ 扫描中...';
+
+                resultsSection.style.display = 'none';
+                resultsEl.innerHTML = '';
+
+                const job = await client.createScan(selectedScanner.id, parameters);
+                log(`Job created: ${job.id}`, 'success');
+
+            } catch (error) {
+                log('Failed to start scan: ' + error.message, 'error');
+                alert('启动扫描失败: ' + error.message);
+                scanBtn.disabled = false;
+                statusEl.className = 'status connected';
+                statusEl.textContent = '🟢 已连接';
+            }
+        }
+
+        // 显示扫描结果
+        function displayResults(results) {
+            resultsSection.style.display = 'block';
+
+            resultsEl.innerHTML = results.map((result, index) => {
+                const fileUrl = client.getFileUrl(result.file_path);
+                const isImage = ['JPEG', 'PNG', 'TIFF', 'JPG', 'BMP'].includes(result.format.toUpperCase());
+
+                if (isImage) {
+                    return `
+                        <div class="result-item">
+                            <img src="${fileUrl}" alt="Page ${result.page_number}">
+                            <div class="result-info">
+                                Page ${result.page_number}<br>
+                                ${result.format} - ${(result.file_size / 1024).toFixed(1)} KB
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="result-item">
+                            <div class="result-info" style="padding: 40px 10px;">
+                                Page ${result.page_number}<br>
+                                ${result.format}<br>
+                                <a href="${fileUrl}" download style="color: #667eea;">下载</a>
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+        }
+
+        // 初始化日志
+        log('Scanner SDK initialized');
+        log(`Server: ${SERVER_URL}`);
+    </script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "name": "scanner-service-client",
+  "version": "1.0.0",
+  "description": "JavaScript/TypeScript SDK for Scanner Service - Cross-platform document scanning service",
+  "main": "src/scanner-client.js",
+  "scripts": {
+    "example:node": "node examples/node-example.js",
+    "example:browser": "open examples/browser-example.html"
+  },
+  "keywords": [
+    "scanner",
+    "scanning",
+    "document",
+    "escl",
+    "websocket",
+    "sdk"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "node-fetch": "^2.6.7",
+    "ws": "^8.13.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

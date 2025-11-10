@@ -1,0 +1,62 @@
+# Scanner Service Configuration File
+
+# Server configuration
+server:
+  # Host to bind to (0.0.0.0 for all interfaces)
+  host: "0.0.0.0"
+
+  # Port to listen on
+  port: 8080
+
+  # Enable eSCL (AirPrint scanning) protocol support
+  escl_enabled: true
+
+  # eSCL service port (usually same as main port)
+  escl_port: 8080
+
+# Scanner configuration
+scanner:
+  # Default resolution in DPI
+  default_resolution: 300
+
+  # Default color mode: Color, Grayscale, BlackAndWhite
+  default_color_mode: "Color"
+
+  # Default output format: PDF, JPEG, PNG, TIFF
+  default_format: "PDF"
+
+  # Scan timeout in seconds
+  scan_timeout: 300
+
+# Storage configuration
+storage:
+  # Directory to store scanned files
+  output_dir: "./scans"
+
+  # Maximum storage size in bytes (10GB = 10 * 1024 * 1024 * 1024)
+  max_storage_size: 10737418240
+
+  # Enable automatic cleanup of old scans
+  cleanup_enabled: true
+
+  # Number of days to retain scans before cleanup
+  retention_days: 30
+
+# Auto-scan configuration (lid close detection)
+autoscan:
+  # Enable auto-scan on lid close
+  enabled: false
+
+  # Delay in seconds after lid close before scanning
+  lid_close_delay: 2
+
+  # Specific scanner ID to monitor (empty = first available)
+  scanner_id: ""
+
+  # Default parameters for auto-scan
+  default_params:
+    resolution: 300
+    color_mode: "Color"
+    format: "PDF"
+    use_duplex: false
+    use_feeder: false

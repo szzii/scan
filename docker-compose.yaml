@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  scanner-service:
+    build: .
+    container_name: scanner-service
+    ports:
+      - "8080:8080"
+    volumes:
+      # Mount scans directory to persist scanned files
+      - ./scans:/app/scans
+      # Mount custom config if needed
+      - ./config.yaml:/app/config.yaml:ro
+    environment:
+      # Environment variables (optional, overrides config file)
+      # SCANNER_SERVER_HOST: "0.0.0.0"
+      # SCANNER_SERVER_PORT: "8080"
+      # SCANNER_SCANNER_DEFAULT_RESOLUTION: "300"
+      - TZ=UTC
+    restart: unless-stopped
+    networks:
+      - scanner-net
+    # Device access for USB scanners (Linux only)
+    devices:
+      - /dev/bus/usb:/dev/bus/usb
+    # Privileged mode may be required for some scanners
+    # privileged: true
+
+networks:
+  scanner-net:
+    driver: bridge
+
+volumes:
+  scans:
+    driver: local

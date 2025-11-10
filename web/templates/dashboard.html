@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .title }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .scanner-list {
+            list-style: none;
+        }
+
+        .scanner-item {
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .scanner-item h3 {
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .scanner-item p {
+            color: #666;
+            font-size: 0.9em;
+            margin: 5px 0;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .status.idle {
+            background: #4caf50;
+            color: white;
+        }
+
+        .status.scanning {
+            background: #ff9800;
+            color: white;
+        }
+
+        .scan-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            color: #555;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-group select,
+        .form-group input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        .form-group select:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .job-list {
+            list-style: none;
+        }
+
+        .job-item {
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        .job-item h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .job-item p {
+            color: #666;
+            font-size: 0.9em;
+            margin: 5px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .scan-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .scan-preview {
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+
+        .scan-preview:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .scan-preview img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .page-number {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.85em;
+        }
+
+        .file-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px;
+            font-size: 0.75em;
+            text-align: center;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+            font-style: italic;
+        }
+
+        .download-btn {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            transition: background 0.2s;
+        }
+
+        .download-btn:hover {
+            background: #764ba2;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 10px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            color: white;
+            font-size: 40px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🖨️ Scanner Service Dashboard</h1>
+            <p>Simple and Fast Scanner Control</p>
+        </header>
+
+        <div class="dashboard">
+            <!-- Left Column: Scanners -->
+            <div>
+                <div class="card">
+                    <h2>Available Scanners</h2>
+                    <ul id="scannerList" class="scanner-list">
+                        <li class="empty-state">Loading scanners...</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Right Column: Scan Form & Jobs -->
+            <div>
+                <div class="card">
+                    <h2>New Scan</h2>
+                    <form class="scan-form" id="scanForm">
+                        <div class="form-group">
+                            <label>Scanner</label>
+                            <select id="scannerSelect" required>
+                                <option value="">Select a scanner...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Resolution (DPI)</label>
+                            <select id="resolution">
+                                <option value="75">75 DPI</option>
+                                <option value="100">100 DPI</option>
+                                <option value="150">150 DPI</option>
+                                <option value="200">200 DPI</option>
+                                <option value="300" selected>300 DPI</option>
+                                <option value="600">600 DPI</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Color Mode</label>
+                            <select id="colorMode">
+                                <option value="Color" selected>Color</option>
+                                <option value="Grayscale">Grayscale</option>
+                                <option value="BlackAndWhite">Black & White</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Output Format</label>
+                            <select id="format">
+                                <option value="JPEG" selected>JPEG</option>
+                                <option value="PNG">PNG</option>
+                                <option value="TIFF">TIFF</option>
+                                <option value="BMP">BMP</option>
+                                <option value="PDF">PDF</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="jpegQualityGroup">
+                            <label>JPEG Quality: <span id="qualityValue">75</span>%</label>
+                            <input type="range" id="jpegQuality" min="10" max="100" value="75" step="5"
+                                   style="width: 100%; cursor: pointer;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.85em; color: #666; margin-top: 3px;">
+                                <span>Lower size (10)</span>
+                                <span>Higher quality (100)</span>
+                            </div>
+                            <small style="display: block; color: #666; margin-top: 5px;">
+                                💡 Lower quality = smaller file size. 75 is recommended.
+                            </small>
+                        </div>
+
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="useFeeder">
+                            <label for="useFeeder">Use Auto Document Feeder (ADF)</label>
+                        </div>
+
+                        <button type="submit" class="btn-primary">🚀 Start Scan</button>
+                    </form>
+                </div>
+
+                <div class="card" style="margin-top: 20px;">
+                    <h2>Scan Jobs</h2>
+                    <ul id="jobList" class="job-list">
+                        <li class="empty-state">No scan jobs yet</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image modal -->
+    <div id="imageModal" class="modal" onclick="this.style.display='none'">
+        <span class="modal-close">&times;</span>
+        <img id="modalImage" src="" alt="Scanned image">
+    </div>
+
+    <script>
+        // Global state
+        let scanners = [];
+        let jobs = {};
+        let ws = null;
+
+        // WebSocket connection
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
+
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+            };
+
+            ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                console.log('WebSocket message:', message);
+
+                if (message.type === 'job_status') {
+                    updateJob(message.payload);
+                }
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket disconnected, reconnecting...');
+                setTimeout(connectWebSocket, 3000);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+        }
+
+        // Load scanners
+        async function loadScanners() {
+            try {
+                const response = await fetch('/api/v1/scanners');
+                const data = await response.json();
+                scanners = data.scanners || [];
+                renderScanners();
+                updateScannerSelect();
+            } catch (error) {
+                console.error('Failed to load scanners:', error);
+            }
+        }
+
+        function renderScanners() {
+            const list = document.getElementById('scannerList');
+
+            if (scanners.length === 0) {
+                list.innerHTML = '<li class="empty-state">No scanners found</li>';
+                return;
+            }
+
+            list.innerHTML = scanners.map(scanner => `
+                <li class="scanner-item">
+                    <h3>${scanner.name}</h3>
+                    <p><strong>Model:</strong> ${scanner.manufacturer} ${scanner.model}</p>
+                    <p><strong>Status:</strong> <span class="status ${scanner.status}">${scanner.status}</span></p>
+                </li>
+            `).join('');
+        }
+
+        function updateScannerSelect() {
+            const select = document.getElementById('scannerSelect');
+            select.innerHTML = '<option value="">Select a scanner...</option>';
+
+            scanners.forEach(scanner => {
+                const option = document.createElement('option');
+                option.value = scanner.id;
+                option.textContent = scanner.name;
+                select.appendChild(option);
+            });
+        }
+
+        // Load jobs
+        async function loadJobs() {
+            try {
+                const response = await fetch('/api/v1/jobs');
+                const data = await response.json();
+                (data.jobs || []).forEach(job => {
+                    jobs[job.id] = job;
+                });
+                renderJobs();
+            } catch (error) {
+                console.error('Failed to load jobs:', error);
+            }
+        }
+
+        function updateJob(job) {
+            jobs[job.id] = job;
+            renderJobs();
+        }
+
+        function renderJobs() {
+            const list = document.getElementById('jobList');
+            const jobArray = Object.values(jobs).sort((a, b) =>
+                new Date(b.created_at) - new Date(a.created_at)
+            );
+
+            if (jobArray.length === 0) {
+                list.innerHTML = '<li class="empty-state">No scan jobs yet</li>';
+                return;
+            }
+
+            list.innerHTML = jobArray.map(job => {
+                let resultsHTML = '';
+
+                if (job.status === 'completed' && job.results && job.results.length > 0) {
+                    const imageFormats = ['JPEG', 'PNG', 'TIFF', 'JPG'];
+                    const hasImages = job.results.some(r => imageFormats.includes(r.format.toUpperCase()));
+
+                    resultsHTML = `
+                        <p><strong>Results:</strong> ${job.results.length} page(s) scanned</p>
+                        ${hasImages ? `
+                            <div class="scan-results">
+                                ${job.results.map(result => {
+                                    const isImage = imageFormats.includes(result.format.toUpperCase());
+                                    const fileUrl = `/api/v1/files/${result.file_path}`;
+
+                                    if (isImage) {
+                                        return `
+                                            <div class="scan-preview" onclick="showImage('${fileUrl}')">
+                                                <img src="${fileUrl}" alt="Page ${result.page_number}">
+                                                <div class="page-number">Page ${result.page_number}</div>
+                                                <div class="file-info">
+                                                    ${result.format} - ${(result.file_size / 1024).toFixed(1)} KB
+                                                </div>
+                                            </div>
+                                        `;
+                                    } else {
+                                        return `
+                                            <div class="scan-preview">
+                                                <div style="padding: 20px; text-align: center;">
+                                                    <div class="page-number">Page ${result.page_number}</div>
+                                                    <p style="margin: 10px 0;">${result.format}</p>
+                                                    <a href="${fileUrl}" download class="download-btn">Download</a>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }
+                                }).join('')}
+                            </div>
+                        ` : `
+                            <div style="margin-top: 10px;">
+                                ${job.results.map(result => `
+                                    <a href="/api/v1/files/${result.file_path}" download class="download-btn" style="margin-right: 10px;">
+                                        Download Page ${result.page_number} (${result.format})
+                                    </a>
+                                `).join('')}
+                            </div>
+                        `}
+                    `;
+                }
+
+                let statusHTML = '';
+                if (job.status === 'processing') {
+                    statusHTML = `
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${job.progress}%">
+                                ${job.progress}%
+                            </div>
+                        </div>
+                    `;
+                } else if (job.status === 'failed') {
+                    statusHTML = `<p style="color: #f44336;"><strong>Error:</strong> ${job.error}</p>`;
+                }
+
+                return `
+                    <li class="job-item">
+                        <h3>Scan Job - ${job.scanner_id}</h3>
+                        <p><strong>Status:</strong> <span class="status ${job.status}">${job.status}</span></p>
+                        <p><strong>Created:</strong> ${new Date(job.created_at).toLocaleString()}</p>
+                        ${statusHTML}
+                        ${resultsHTML}
+                    </li>
+                `;
+            }).join('');
+        }
+
+        function showImage(url) {
+            document.getElementById('modalImage').src = url;
+            document.getElementById('imageModal').style.display = 'flex';
+        }
+
+        // Update JPEG quality display
+        const jpegQualityInput = document.getElementById('jpegQuality');
+        const qualityValueSpan = document.getElementById('qualityValue');
+
+        jpegQualityInput.addEventListener('input', (e) => {
+            qualityValueSpan.textContent = e.target.value;
+        });
+
+        // Show/hide JPEG quality based on format selection
+        const formatSelect = document.getElementById('format');
+        const jpegQualityGroup = document.getElementById('jpegQualityGroup');
+
+        function updateQualityVisibility() {
+            const format = formatSelect.value;
+            if (format === 'JPEG') {
+                jpegQualityGroup.style.display = 'block';
+            } else {
+                jpegQualityGroup.style.display = 'none';
+            }
+        }
+
+        formatSelect.addEventListener('change', updateQualityVisibility);
+        updateQualityVisibility(); // Initial check
+
+        // Submit scan form
+        document.getElementById('scanForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const scannerID = document.getElementById('scannerSelect').value;
+            const resolution = parseInt(document.getElementById('resolution').value);
+            const colorMode = document.getElementById('colorMode').value;
+            const format = document.getElementById('format').value;
+            const useFeeder = document.getElementById('useFeeder').checked;
+            const jpegQuality = parseInt(document.getElementById('jpegQuality').value);
+
+            if (!scannerID) {
+                alert('Please select a scanner');
+                return;
+            }
+
+            const parameters = {
+                resolution: resolution,
+                color_mode: colorMode,
+                format: format,
+                width: 210,
+                height: 297,
+                brightness: 0,
+                contrast: 0,
+                use_duplex: false,
+                use_feeder: useFeeder,
+                page_count: useFeeder ? 100 : 1,
+                jpeg_quality: jpegQuality
+            };
+
+            try {
+                const response = await fetch('/api/v1/scan', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        scanner_id: scannerID,
+                        parameters: parameters
+                    })
+                });
+
+                if (response.ok) {
+                    const job = await response.json();
+                    alert('Scan started successfully!');
+                    updateJob(job);
+                } else {
+                    const error = await response.json();
+                    alert(`Failed to start scan: ${error.error}`);
+                }
+            } catch (error) {
+                console.error('Failed to start scan:', error);
+                alert('Failed to start scan');
+            }
+        });
+
+        // Initialize
+        connectWebSocket();
+        loadScanners();
+        loadJobs();
+
+        // Refresh data periodically
+        setInterval(loadScanners, 30000);
+        setInterval(loadJobs, 10000);
+    </script>
+</body>
+</html>

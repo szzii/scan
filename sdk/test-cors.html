@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS 测试工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #555;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+            display: block;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+            display: block;
+        }
+
+        .result h3 {
+            margin-bottom: 10px;
+        }
+
+        .result pre {
+            background: rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            display: none;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            color: #1565c0;
+            font-size: 0.95em;
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔒 CORS 测试工具</h1>
+        <p class="subtitle">测试扫描服务的跨域访问是否正常</p>
+
+        <div class="info-box">
+            <strong>💡 使用说明：</strong>
+            1. 确保扫描服务正在运行<br>
+            2. 输入服务器地址（默认：http://localhost:8080）<br>
+            3. 点击"测试CORS"按钮<br>
+            4. 查看测试结果
+        </div>
+
+        <form id="testForm">
+            <div class="form-group">
+                <label for="serverUrl">扫描服务地址</label>
+                <input
+                    type="text"
+                    id="serverUrl"
+                    value="http://localhost:8080"
+                    placeholder="http://localhost:8080"
+                    required
+                >
+            </div>
+
+            <button type="submit">🚀 测试 CORS</button>
+        </form>
+
+        <div class="loading" id="loading">
+            <p>正在测试...</p>
+        </div>
+
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('testForm');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const serverUrl = document.getElementById('serverUrl').value.trim();
+
+            // 显示加载状态
+            loading.classList.add('show');
+            result.style.display = 'none';
+
+            try {
+                // 测试1: 健康检查
+                console.log('Testing health endpoint...');
+                const healthResponse = await fetch(`${serverUrl}/api/v1/health`);
+
+                if (!healthResponse.ok) {
+                    throw new Error(`服务器返回错误状态: ${healthResponse.status}`);
+                }
+
+                const healthData = await healthResponse.json();
+                const corsHeader = healthResponse.headers.get('Access-Control-Allow-Origin');
+
+                // 测试2: 获取扫描仪列表
+                console.log('Testing scanners endpoint...');
+                const scannersResponse = await fetch(`${serverUrl}/api/v1/scanners`);
+
+                if (!scannersResponse.ok) {
+                    throw new Error(`无法获取扫描仪列表: ${scannersResponse.status}`);
+                }
+
+                const scannersData = await scannersResponse.json();
+
+                // 显示成功结果
+                loading.classList.remove('show');
+                result.className = 'result success';
+                result.innerHTML = `
+                    <h3>✅ CORS 测试成功！</h3>
+                    <p><strong>服务器地址：</strong> ${serverUrl}</p>
+                    <p><strong>CORS 响应头：</strong> ${corsHeader || '未找到'}</p>
+                    <p><strong>健康检查：</strong> ${healthData.status || 'OK'}</p>
+                    <p><strong>扫描仪数量：</strong> ${scannersData.scanners ? scannersData.scanners.length : 0}</p>
+
+                    <h4 style="margin-top: 15px;">响应头详情：</h4>
+                    <pre>${formatHeaders(scannersResponse.headers)}</pre>
+
+                    <h4 style="margin-top: 15px;">测试结论：</h4>
+                    <p>🎉 跨域访问正常工作！你现在可以在任何域名下使用 Scanner SDK。</p>
+
+                    <h4 style="margin-top: 15px;">下一步：</h4>
+                    <p>在你的项目中使用：</p>
+                    <pre>const client = new ScannerClient('${serverUrl}');
+const scanners = await client.listScanners();</pre>
+                `;
+
+            } catch (error) {
+                // 显示错误结果
+                loading.classList.remove('show');
+                result.className = 'result error';
+                result.innerHTML = `
+                    <h3>❌ CORS 测试失败</h3>
+                    <p><strong>错误信息：</strong></p>
+                    <pre>${error.message}</pre>
+
+                    <h4 style="margin-top: 15px;">可能的原因：</h4>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>扫描服务未启动</li>
+                        <li>服务器地址错误</li>
+                        <li>使用的服务器版本过旧（需要 v1.0.14+）</li>
+                        <li>网络连接问题</li>
+                    </ul>
+
+                    <h4 style="margin-top: 15px;">解决方案：</h4>
+                    <ol style="margin-left: 20px; margin-top: 10px;">
+                        <li>确认扫描服务正在运行</li>
+                        <li>在浏览器访问：<a href="${serverUrl}/api/v1/health" target="_blank">${serverUrl}/api/v1/health</a></li>
+                        <li>检查服务器版本（需要 v1.0.14 或更高）</li>
+                        <li>查看详细文档：CORS-GUIDE.md</li>
+                    </ol>
+                `;
+            }
+        });
+
+        function formatHeaders(headers) {
+            const important = [
+                'access-control-allow-origin',
+                'access-control-allow-methods',
+                'access-control-allow-headers',
+                'access-control-allow-credentials'
+            ];
+
+            let result = '';
+            for (const [key, value] of headers.entries()) {
+                if (important.includes(key.toLowerCase())) {
+                    result += `${key}: ${value}\n`;
+                }
+            }
+
+            return result || '未找到 CORS 相关响应头';
+        }
+
+        // 页面加载时的提示
+        console.log('%c🔒 CORS 测试工具', 'font-size: 20px; color: #667eea; font-weight: bold;');
+        console.log('这个页面可以帮助你测试扫描服务的 CORS 配置是否正常。');
+        console.log('打开开发者工具的 Network 标签可以查看详细的请求信息。');
+    </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "name": "scanner-service-sdk",
+  "version": "1.0.0",
+  "description": "JavaScript SDK for Scanner Service API",
+  "main": "scanner-sdk.js",
+  "scripts": {
+    "example": "open example.html"
+  },
+  "keywords": [
+    "scanner",
+    "scan",
+    "wia",
+    "twain",
+    "sdk",
+    "document-scanner"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": ""
+  }
+}

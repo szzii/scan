@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .title }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 24px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+
+        .scanner-list, .job-list {
+            list-style: none;
+        }
+
+        .scanner-item, .job-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            background: #fafafa;
+        }
+
+        .scanner-item h3, .job-item h3 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .scanner-item p, .job-item p {
+            font-size: 14px;
+            color: #666;
+            margin: 3px 0;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status.idle {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status.scanning {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .status.pending {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .status.processing {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .status.completed {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status.failed {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #4CAF50;
+            transition: width 0.3s ease;
+        }
+
+        .scan-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .connection-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ccc;
+        }
+
+        .connection-dot.connected {
+            background: #4CAF50;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .scan-results {
+            margin-top: 15px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .scan-preview {
+            position: relative;
+            border: 2px solid #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            background: #f5f5f5;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .scan-preview:hover {
+            transform: scale(1.02);
+            border-color: #4CAF50;
+        }
+
+        .scan-preview img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .scan-preview .page-number {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .scan-preview .file-info {
+            padding: 8px;
+            background: white;
+            font-size: 11px;
+            color: #666;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            position: relative;
+        }
+
+        .modal-content img {
+            max-width: 100%;
+            max-height: 90vh;
+            object-fit: contain;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        .modal-close:hover {
+            color: #ccc;
+        }
+
+        .download-btn {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: #2196F3;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .download-btn:hover {
+            background: #1976D2;
+        }
+
+        .adf-info {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 13px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Scanner Service Dashboard</h1>
+            <div class="connection-status" id="wsStatus">
+                <div class="connection-dot" id="wsStatusDot"></div>
+                <span id="wsStatusText">Connecting to WebSocket...</span>
+            </div>
+        </header>
+
+        <div class="grid">
+            <div class="card">
+                <h2>Available Scanners</h2>
+                <ul class="scanner-list" id="scannerList">
+                    <li class="empty-state">Loading scanners...</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>🔄 Auto-Scan (Lid Close Detection)</h2>
+                <div style="margin-bottom: 15px; padding: 10px; background: #e3f2fd; border-radius: 4px; color: #1565c0;">
+                    <strong>💡 合盖自动扫描：</strong><br>
+                    启用后，当您合上扫描仪盖子时，系统会自动触发扫描。<br>
+                    适用于平板扫描仪的便捷扫描场景。
+                </div>
+
+                <div class="form-group">
+                    <label>Scanner for Auto-Scan</label>
+                    <select id="autoScanScanner">
+                        <option value="">Select a scanner...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Delay after Lid Close (seconds)</label>
+                    <input type="number" id="autoScanDelay" value="2" min="0" max="10" step="1">
+                    <small style="display: block; color: #666; margin-top: 3px;">
+                        等待时间（秒）：合盖后延迟扫描，让盖子完全压紧
+                    </small>
+                </div>
+
+                <div class="form-row">
+                    <button type="button" class="btn-primary" id="startAutoScanBtn" style="flex: 1;">
+                        ▶️ Start Auto-Scan
+                    </button>
+                    <button type="button" class="btn-secondary" id="stopAutoScanBtn" style="flex: 1; display: none;">
+                        ⏸️ Stop Auto-Scan
+                    </button>
+                </div>
+
+                <div id="autoScanStatus" style="margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 4px; text-align: center; font-weight: bold;">
+                    ⚪ Auto-scan is inactive
+                </div>
+
+                <!-- Manual trigger button (visible when auto-scan is active) -->
+                <div id="manualTriggerSection" style="display: none; margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 4px;">
+                    <p style="margin: 0 0 10px 0; font-size: 14px; color: #856404;">
+                        <strong>💡 备用方案：</strong>如果自动检测不工作，您可以手动触发扫描：
+                    </p>
+                    <button type="button" class="btn-primary" id="manualTriggerBtn" style="width: 100%;">
+                        📄 手动触发扫描 (Manual Trigger Scan)
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>New Scan</h2>
+                <form class="scan-form" id="scanForm">
+                    <div class="form-group">
+                        <label>Scanner</label>
+                        <select id="scannerSelect" required>
+                            <option value="">Select a scanner...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Resolution (DPI)</label>
+                            <select id="resolution">
+                                <option value="150">150</option>
+                                <option value="300" selected>300</option>
+                                <option value="600">600</option>
+                                <option value="1200">1200</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Color Mode</label>
+                            <select id="colorMode">
+                                <option value="Color" selected>Color</option>
+                                <option value="Grayscale">Grayscale</option>
+                                <option value="BlackAndWhite">Black & White</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Format</label>
+                            <select id="format">
+                                <option value="PDF" selected>PDF</option>
+                                <option value="JPEG">JPEG</option>
+                                <option value="PNG">PNG</option>
+                                <option value="TIFF">TIFF</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Pages</label>
+                            <input type="number" id="pageCount" value="1" min="1" max="100">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="useFeeder" style="width: auto; margin-right: 5px;">
+                                <strong>Use Auto Document Feeder (ADF)</strong> - Batch Scanning
+                            </label>
+                            <small style="display: block; color: #666; margin-top: 3px; margin-left: 23px;">
+                                ⚡ Automatically scans all pages continuously without delay
+                            </small>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="useDuplex" style="width: auto; margin-right: 5px;">
+                                Duplex Scanning (Both Sides)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="adf-info" id="adfInfo" style="display: none;">
+                        <strong>📄 ADF Batch Scanning Mode:</strong><br>
+                        • Place multiple pages (up to 50+) in the document feeder<br>
+                        • Click "Start Scan" once<br>
+                        • Scanner automatically scans all pages <strong>continuously with NO delay</strong><br>
+                        • Perfect for multi-page documents, contracts, and reports<br>
+                        <em style="color: #2e7d32;">✓ NAPS2-optimized for maximum speed</em>
+                    </div>
+
+                    <!-- NAPS2 Batch Scanning Mode -->
+                    <details style="margin: 15px 0; padding: 10px; background: #fff3cd; border-radius: 4px; border: 1px solid #ffc107;">
+                        <summary style="cursor: pointer; font-weight: 600; padding: 5px; color: #856404;">⚙️ Batch Scanning Mode (NAPS2)</summary>
+                        <div style="padding: 15px 0;">
+                            <div class="form-group">
+                                <label><strong>Batch Scan Type</strong></label>
+                                <select id="batchScanType" style="margin-bottom: 10px;">
+                                    <option value="single" selected>Single Scan - 单次扫描</option>
+                                    <option value="multiple_with_prompt">Multiple with Prompt - 多次扫描（每次后提示）</option>
+                                    <option value="multiple_with_delay">Multiple with Delay - 多次扫描（固定延迟）</option>
+                                </select>
+                                <small style="display: block; color: #666; margin-top: 5px;">
+                                    选择批量扫描模式（适用于多个独立扫描任务）
+                                </small>
+                            </div>
+
+                            <!-- Batch settings (shown when needed) -->
+                            <div id="batchDelaySettings" style="display: none; margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 4px;">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Scan Count - 扫描次数</label>
+                                        <input type="number" id="batchScanCount" value="3" min="2" max="20">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Interval (seconds) - 间隔秒数</label>
+                                        <input type="number" id="batchScanInterval" value="5" min="1" max="60">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="batchPromptInfo" style="display: none; margin-top: 10px; padding: 10px; background: #d1ecf1; border-radius: 4px; color: #0c5460;">
+                                <strong>💡 提示模式说明：</strong><br>
+                                每次扫描完成后，系统会提示您是否继续下一次扫描。<br>
+                                适合不确定页数的场景。
+                            </div>
+
+                            <div style="margin-top: 10px; padding: 10px; background: #e7f3ff; border-radius: 4px; color: #004085;">
+                                <strong>ℹ️ 注意：</strong><br>
+                                • <strong>ADF 模式</strong>：一次扫描自动处理所有页面，无需批量扫描模式<br>
+                                • <strong>批量扫描模式</strong>：用于多个独立扫描任务（如定时扫描、不同文档批次）
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- NAPS2 Features -->
+                    <details style="margin: 15px 0; padding: 10px; background: #f9f9f9; border-radius: 4px;">
+                        <summary style="cursor: pointer; font-weight: 600; padding: 5px;">🎨 NAPS2 Advanced Features</summary>
+                        <div style="padding: 15px 0;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Paper Size</label>
+                                    <select id="pageSize">
+                                        <option value="">Default</option>
+                                        <option value="Letter">Letter (8.5" x 11")</option>
+                                        <option value="Legal">Legal (8.5" x 14")</option>
+                                        <option value="A4" selected>A4 (210 x 297 mm)</option>
+                                        <option value="A3">A3 (297 x 420 mm)</option>
+                                        <option value="A5">A5 (148 x 210 mm)</option>
+                                        <option value="B4">B4 (250 x 353 mm)</option>
+                                        <option value="B5">B5 (176 x 250 mm)</option>
+                                        <option value="A6">A6 (105 x 148 mm)</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Page Alignment</label>
+                                    <select id="pageAlign">
+                                        <option value="">Default</option>
+                                        <option value="Left">Left</option>
+                                        <option value="Center">Center</option>
+                                        <option value="Right">Right</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Scale Ratio</label>
+                                    <select id="scaleRatio">
+                                        <option value="1" selected>1:1 (100%)</option>
+                                        <option value="2">1:2 (50%)</option>
+                                        <option value="4">1:4 (25%)</option>
+                                        <option value="8">1:8 (12.5%)</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>JPEG Quality (0-100)</label>
+                                    <input type="number" id="jpegQuality" value="75" min="0" max="100">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" id="excludeBlankPages" style="width: auto; margin-right: 5px;">
+                                        Exclude Blank Pages
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" id="maxQuality" style="width: auto; margin-right: 5px;">
+                                        Max Quality (Lossless PNG)
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="form-row" id="blankPageSettings" style="display: none;">
+                                <div class="form-group">
+                                    <label>White Threshold (0-100)</label>
+                                    <input type="number" id="blankPageWhiteThreshold" value="70" min="0" max="100">
+                                </div>
+                                <div class="form-group">
+                                    <label>Coverage Threshold (0-100)</label>
+                                    <input type="number" id="blankPageCoverageThreshold" value="15" min="0" max="100">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" id="cropToPageSize" style="width: auto; margin-right: 5px;">
+                                        Crop to Page Size
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" id="stretchToPageSize" style="width: auto; margin-right: 5px;">
+                                        Stretch to Page Size
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+
+                    <button type="submit">Start Scan</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Scan Jobs</h2>
+            <ul class="job-list" id="jobList">
+                <li class="empty-state">No scan jobs yet</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Image Preview Modal -->
+    <div class="modal" id="imageModal">
+        <span class="modal-close" onclick="closeModal()">&times;</span>
+        <div class="modal-content">
+            <img id="modalImage" src="" alt="Scan Preview">
+        </div>
+    </div>
+
+    <script>
+        let ws;
+        let scanners = [];
+        let jobs = {};
+
+        // WebSocket connection
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
+
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                updateWSStatus(true);
+            };
+
+            ws.onclose = () => {
+                updateWSStatus(false);
+                setTimeout(connectWebSocket, 3000);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                updateWSStatus(false);
+            };
+
+            ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                handleWebSocketMessage(message);
+            };
+        }
+
+        function updateWSStatus(connected) {
+            const dot = document.getElementById('wsStatusDot');
+            const text = document.getElementById('wsStatusText');
+
+            if (connected) {
+                dot.classList.add('connected');
+                text.textContent = 'Connected';
+            } else {
+                dot.classList.remove('connected');
+                text.textContent = 'Disconnected';
+            }
+        }
+
+        function handleWebSocketMessage(message) {
+            if (message.type === 'job_status') {
+                updateJob(message.payload);
+            } else if (message.type === 'scanner_status') {
+                loadScanners();
+            }
+        }
+
+        // Load scanners
+        async function loadScanners() {
+            try {
+                const response = await fetch('/api/v1/scanners');
+                const data = await response.json();
+                scanners = data.scanners || [];
+                renderScanners();
+                updateScannerSelect();
+            } catch (error) {
+                console.error('Failed to load scanners:', error);
+            }
+        }
+
+        function renderScanners() {
+            const list = document.getElementById('scannerList');
+
+            if (scanners.length === 0) {
+                list.innerHTML = '<li class="empty-state">No scanners found</li>';
+                return;
+            }
+
+            list.innerHTML = scanners.map(scanner => `
+                <li class="scanner-item">
+                    <h3>${scanner.name}</h3>
+                    <p><strong>Model:</strong> ${scanner.manufacturer} ${scanner.model}</p>
+                    <p><strong>Status:</strong> <span class="status ${scanner.status}">${scanner.status}</span></p>
+                </li>
+            `).join('');
+        }
+
+        function updateScannerSelect() {
+            const select = document.getElementById('scannerSelect');
+            const autoScanSelect = document.getElementById('autoScanScanner');
+
+            select.innerHTML = '<option value="">Select a scanner...</option>';
+            autoScanSelect.innerHTML = '<option value="">Select a scanner...</option>';
+
+            scanners.forEach(scanner => {
+                // Main scanner dropdown
+                const option = document.createElement('option');
+                option.value = scanner.id;
+                option.textContent = scanner.name;
+                select.appendChild(option);
+
+                // Auto-scan scanner dropdown
+                const autoOption = document.createElement('option');
+                autoOption.value = scanner.id;
+                autoOption.textContent = scanner.name;
+                autoScanSelect.appendChild(autoOption);
+            });
+        }
+
+        // Load jobs
+        async function loadJobs() {
+            try {
+                const response = await fetch('/api/v1/jobs');
+                const data = await response.json();
+                (data.jobs || []).forEach(job => {
+                    jobs[job.id] = job;
+                });
+                renderJobs();
+            } catch (error) {
+                console.error('Failed to load jobs:', error);
+            }
+        }
+
+        function updateJob(job) {
+            jobs[job.id] = job;
+            renderJobs();
+        }
+
+        function renderJobs() {
+            const list = document.getElementById('jobList');
+            const jobArray = Object.values(jobs).sort((a, b) =>
+                new Date(b.created_at) - new Date(a.created_at)
+            );
+
+            if (jobArray.length === 0) {
+                list.innerHTML = '<li class="empty-state">No scan jobs yet</li>';
+                return;
+            }
+
+            list.innerHTML = jobArray.map(job => {
+                let resultsHTML = '';
+
+                if (job.status === 'completed' && job.results && job.results.length > 0) {
+                    const imageFormats = ['JPEG', 'PNG', 'TIFF', 'JPG'];
+                    const hasImages = job.results.some(r => imageFormats.includes(r.format.toUpperCase()));
+
+                    resultsHTML = `
+                        <p><strong>Results:</strong> ${job.results.length} page(s) scanned</p>
+                        ${hasImages ? `
+                            <div class="scan-results">
+                                ${job.results.map(result => {
+                                    const isImage = imageFormats.includes(result.format.toUpperCase());
+                                    const fileUrl = `/api/v1/files/${result.file_path}`;
+
+                                    if (isImage) {
+                                        return `
+                                            <div class="scan-preview" onclick="showImage('${fileUrl}')">
+                                                <img src="${fileUrl}" alt="Page ${result.page_number}">
+                                                <div class="page-number">Page ${result.page_number}</div>
+                                                <div class="file-info">
+                                                    ${result.format} - ${(result.file_size / 1024).toFixed(1)} KB
+                                                </div>
+                                            </div>
+                                        `;
+                                    } else {
+                                        return `
+                                            <div class="scan-preview">
+                                                <div style="padding: 20px; text-align: center;">
+                                                    <div class="page-number">Page ${result.page_number}</div>
+                                                    <p style="margin: 10px 0;">${result.format}</p>
+                                                    <a href="${fileUrl}" download class="download-btn">Download</a>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }
+                                }).join('')}
+                            </div>
+                        ` : `
+                            <div style="margin-top: 10px;">
+                                ${job.results.map(result => `
+                                    <a href="/api/v1/files/${result.file_path}" download class="download-btn" style="margin-right: 10px;">
+                                        Download Page ${result.page_number} (${result.format})
+                                    </a>
+                                `).join('')}
+                            </div>
+                        `}
+                    `;
+                }
+
+                return `
+                    <li class="job-item">
+                        <h3>Job ${job.id.substring(0, 8)}...</h3>
+                        <p><strong>Status:</strong> <span class="status ${job.status}">${job.status}</span></p>
+                        <p><strong>Scanner:</strong> ${job.scanner_id}</p>
+                        <p><strong>Parameters:</strong> ${job.parameters.resolution} DPI, ${job.parameters.color_mode}, ${job.parameters.format}</p>
+                        ${job.status === 'processing' ? `
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${job.progress}%"></div>
+                            </div>
+                            <p style="margin-top: 5px; font-size: 12px;">Progress: ${job.progress}%</p>
+                        ` : ''}
+                        ${resultsHTML}
+                        ${job.error ? `<p style="color: #c62828;"><strong>Error:</strong> ${job.error}</p>` : ''}
+                    </li>
+                `;
+            }).join('');
+        }
+
+        function showImage(imageUrl) {
+            const modal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+            modalImage.src = imageUrl;
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('imageModal');
+            modal.classList.remove('active');
+        }
+
+        // Close modal when clicking outside the image
+        document.getElementById('imageModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Show/hide ADF info based on checkbox
+        document.getElementById('useFeeder').addEventListener('change', function() {
+            const adfInfo = document.getElementById('adfInfo');
+            const pageCountInput = document.getElementById('pageCount');
+
+            if (this.checked) {
+                adfInfo.style.display = 'block';
+                // Suggest more pages when using ADF
+                if (pageCountInput.value == '1') {
+                    pageCountInput.value = '10';
+                }
+            } else {
+                adfInfo.style.display = 'none';
+            }
+        });
+
+        // Show/hide batch scanning settings based on type
+        document.getElementById('batchScanType').addEventListener('change', function() {
+            const batchDelaySettings = document.getElementById('batchDelaySettings');
+            const batchPromptInfo = document.getElementById('batchPromptInfo');
+
+            if (this.value === 'multiple_with_delay') {
+                batchDelaySettings.style.display = 'block';
+                batchPromptInfo.style.display = 'none';
+            } else if (this.value === 'multiple_with_prompt') {
+                batchDelaySettings.style.display = 'none';
+                batchPromptInfo.style.display = 'block';
+            } else {
+                batchDelaySettings.style.display = 'none';
+                batchPromptInfo.style.display = 'none';
+            }
+        });
+
+        // Show/hide blank page settings based on checkbox
+        document.getElementById('excludeBlankPages').addEventListener('change', function() {
+            const blankPageSettings = document.getElementById('blankPageSettings');
+            blankPageSettings.style.display = this.checked ? 'grid' : 'none';
+        });
+
+        // Submit scan form
+        document.getElementById('scanForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const scannerID = document.getElementById('scannerSelect').value;
+            const resolution = parseInt(document.getElementById('resolution').value);
+            const colorMode = document.getElementById('colorMode').value;
+            const format = document.getElementById('format').value;
+            const pageCount = parseInt(document.getElementById('pageCount').value);
+            const useFeeder = document.getElementById('useFeeder').checked;
+            const useDuplex = document.getElementById('useDuplex').checked;
+
+            // Batch Scanning Mode
+            const batchScanType = document.getElementById('batchScanType').value;
+            const batchScanCount = parseInt(document.getElementById('batchScanCount').value);
+            const batchScanInterval = parseInt(document.getElementById('batchScanInterval').value);
+
+            // NAPS2 Advanced Features
+            const pageSize = document.getElementById('pageSize').value;
+            const pageAlign = document.getElementById('pageAlign').value;
+            const scaleRatio = parseInt(document.getElementById('scaleRatio').value);
+            const jpegQuality = parseInt(document.getElementById('jpegQuality').value);
+            const excludeBlankPages = document.getElementById('excludeBlankPages').checked;
+            const maxQuality = document.getElementById('maxQuality').checked;
+            const blankPageWhiteThreshold = parseInt(document.getElementById('blankPageWhiteThreshold').value);
+            const blankPageCoverageThreshold = parseInt(document.getElementById('blankPageCoverageThreshold').value);
+            const cropToPageSize = document.getElementById('cropToPageSize').checked;
+            const stretchToPageSize = document.getElementById('stretchToPageSize').checked;
+
+            if (!scannerID) {
+                alert('Please select a scanner');
+                return;
+            }
+
+            // Build parameters object with NAPS2 features
+            const parameters = {
+                resolution: resolution,
+                color_mode: colorMode,
+                format: format,
+                width: 210,
+                height: 297,
+                brightness: 0,
+                contrast: 0,
+                use_duplex: useDuplex,
+                use_feeder: useFeeder,
+                page_count: pageCount
+            };
+
+            // Add NAPS2 features if specified
+            if (pageSize) {
+                parameters.page_size = pageSize;
+            }
+            if (pageAlign) {
+                parameters.page_align = pageAlign;
+            }
+            if (scaleRatio > 1) {
+                parameters.scale_ratio = scaleRatio;
+            }
+            if (jpegQuality !== 75) {
+                parameters.jpeg_quality = jpegQuality;
+            }
+            if (excludeBlankPages) {
+                parameters.exclude_blank_pages = true;
+                parameters.blank_page_white_threshold = blankPageWhiteThreshold;
+                parameters.blank_page_coverage_threshold = blankPageCoverageThreshold;
+            }
+            if (maxQuality) {
+                parameters.max_quality = true;
+            }
+            if (cropToPageSize) {
+                parameters.crop_to_page_size = true;
+            }
+            if (stretchToPageSize) {
+                parameters.stretch_to_page_size = true;
+            }
+
+            // Check if using batch scanning mode
+            const useBatchMode = batchScanType !== 'single';
+
+            try {
+                let endpoint = '/api/v1/scan';
+                let requestBody = {
+                    scanner_id: scannerID,
+                    parameters: parameters
+                };
+
+                // Use batch scanning API if needed
+                if (useBatchMode) {
+                    endpoint = '/api/v1/scan/batch';
+                    requestBody = {
+                        scanner_id: scannerID,
+                        parameters: parameters,
+                        batch_settings: {
+                            scan_type: batchScanType,
+                            scan_count: batchScanCount,
+                            scan_interval_seconds: batchScanInterval,
+                            output_type: 'load', // Load images into interface
+                            save_separator: 'file_per_scan'
+                        }
+                    };
+                }
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (response.ok) {
+                    if (useBatchMode) {
+                        const result = await response.json();
+                        alert(`Batch scan completed! Scanned ${result.total_scans} batch(es) with ${result.total_pages} pages.`);
+                        // Reload jobs to show results
+                        loadJobs();
+                    } else {
+                        const job = await response.json();
+                        updateJob(job);
+                        alert('Scan started successfully!');
+                    }
+                } else {
+                    const error = await response.json();
+                    alert(`Failed to start scan: ${error.error}`);
+                }
+            } catch (error) {
+                console.error('Failed to start scan:', error);
+                alert('Failed to start scan');
+            }
+        });
+
+        // Auto-Scan Start Button
+        document.getElementById('startAutoScanBtn').addEventListener('click', async () => {
+            const scannerID = document.getElementById('autoScanScanner').value;
+            const delay = parseInt(document.getElementById('autoScanDelay').value);
+
+            if (!scannerID) {
+                alert('Please select a scanner for auto-scan');
+                return;
+            }
+
+            try {
+                // Get current scan parameters
+                const resolution = parseInt(document.getElementById('resolution').value);
+                const colorMode = document.getElementById('colorMode').value;
+                const format = document.getElementById('format').value;
+                const useDuplex = document.getElementById('useDuplex').checked;
+                const useFeeder = document.getElementById('useFeeder').checked;
+
+                const response = await fetch('/api/v1/autoscan/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        scanner_id: scannerID,
+                        delay: delay,
+                        parameters: {
+                            resolution: resolution,
+                            color_mode: colorMode,
+                            format: format,
+                            width: 210,
+                            height: 297,
+                            use_duplex: useDuplex,
+                            use_feeder: useFeeder
+                        }
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    alert(`Auto-scan started successfully!\nScanner: ${scannerID}\nDelay: ${delay}s`);
+
+                    // Update button states
+                    const startBtn = document.getElementById('startAutoScanBtn');
+                    const stopBtn = document.getElementById('stopAutoScanBtn');
+                    startBtn.style.display = 'none';
+                    stopBtn.style.display = 'block';
+
+                    // Show status
+                    const statusDiv = document.getElementById('autoScanStatus');
+                    if (statusDiv) {
+                        statusDiv.textContent = '🟢 Auto-scan is active - waiting for lid close...';
+                        statusDiv.style.color = 'white';
+                        statusDiv.style.background = '#4caf50';
+                    }
+
+                    // Show manual trigger section
+                    document.getElementById('manualTriggerSection').style.display = 'block';
+                } else {
+                    const error = await response.json();
+                    alert(`Failed to start auto-scan: ${error.error}`);
+                }
+            } catch (error) {
+                console.error('Failed to start auto-scan:', error);
+                alert('Failed to start auto-scan');
+            }
+        });
+
+        // Auto-Scan Stop Button
+        document.getElementById('stopAutoScanBtn').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/api/v1/autoscan/stop', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    alert('Auto-scan stopped successfully!');
+
+                    // Update button states
+                    const startBtn = document.getElementById('startAutoScanBtn');
+                    const stopBtn = document.getElementById('stopAutoScanBtn');
+                    startBtn.style.display = 'block';
+                    stopBtn.style.display = 'none';
+
+                    // Clear status
+                    const statusDiv = document.getElementById('autoScanStatus');
+                    if (statusDiv) {
+                        statusDiv.textContent = '⚪ Auto-scan is inactive';
+                        statusDiv.style.color = '#666';
+                        statusDiv.style.background = '#f5f5f5';
+                    }
+
+                    // Hide manual trigger section
+                    document.getElementById('manualTriggerSection').style.display = 'none';
+                } else {
+                    const error = await response.json();
+                    alert(`Failed to stop auto-scan: ${error.error}`);
+                }
+            } catch (error) {
+                console.error('Failed to stop auto-scan:', error);
+                alert('Failed to stop auto-scan');
+            }
+        });
+
+        // Manual Trigger Button - Manually trigger a scan when auto-scan is active
+        document.getElementById('manualTriggerBtn').addEventListener('click', async () => {
+            const scannerID = document.getElementById('autoScanScanner').value;
+
+            if (!scannerID) {
+                alert('Please ensure a scanner is selected for auto-scan');
+                return;
+            }
+
+            try {
+                // Get current scan parameters
+                const resolution = parseInt(document.getElementById('resolution').value);
+                const colorMode = document.getElementById('colorMode').value;
+                const format = document.getElementById('format').value;
+                const useDuplex = document.getElementById('useDuplex').checked;
+                const useFeeder = document.getElementById('useFeeder').checked;
+
+                // Trigger a regular scan
+                const response = await fetch('/api/v1/scan', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        scanner_id: scannerID,
+                        parameters: {
+                            resolution: resolution,
+                            color_mode: colorMode,
+                            format: format,
+                            width: 210,
+                            height: 297,
+                            use_duplex: useDuplex,
+                            use_feeder: useFeeder,
+                            page_count: 1
+                        }
+                    })
+                });
+
+                if (response.ok) {
+                    const job = await response.json();
+                    alert(`扫描已触发！\nScan triggered!\nJob ID: ${job.id}`);
+                    updateJob(job);
+                } else {
+                    const error = await response.json();
+                    alert(`Failed to trigger scan: ${error.error}`);
+                }
+            } catch (error) {
+                console.error('Failed to trigger manual scan:', error);
+                alert('Failed to trigger manual scan');
+            }
+        });
+
+        // Initialize
+        connectWebSocket();
+        loadScanners();
+        loadJobs();
+
+        // Check auto-scan status on load
+        async function checkAutoScanStatus() {
+            try {
+                const response = await fetch('/api/v1/autoscan/status');
+                const data = await response.json();
+
+                const startBtn = document.getElementById('startAutoScanBtn');
+                const stopBtn = document.getElementById('stopAutoScanBtn');
+                const statusDiv = document.getElementById('autoScanStatus');
+
+                if (data.enabled) {
+                    startBtn.style.display = 'none';
+                    stopBtn.style.display = 'block';
+                    document.getElementById('manualTriggerSection').style.display = 'block';
+                    if (statusDiv) {
+                        statusDiv.textContent = '🟢 Auto-scan is active - waiting for lid close...';
+                        statusDiv.style.color = 'white';
+                        statusDiv.style.background = '#4caf50';
+                    }
+                } else {
+                    startBtn.style.display = 'block';
+                    stopBtn.style.display = 'none';
+                    document.getElementById('manualTriggerSection').style.display = 'none';
+                    if (statusDiv) {
+                        statusDiv.textContent = '⚪ Auto-scan is inactive';
+                        statusDiv.style.color = '#666';
+                        statusDiv.style.background = '#f5f5f5';
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to check auto-scan status:', error);
+            }
+        }
+        checkAutoScanStatus();
+
+        // Refresh data periodically
+        setInterval(loadScanners, 30000);
+        setInterval(loadJobs, 10000);
+        setInterval(checkAutoScanStatus, 5000); // Check auto-scan status every 5 seconds
+    </script>
+</body>
+</html>
