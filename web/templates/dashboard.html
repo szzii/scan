@@ -381,6 +381,23 @@
                             </select>
                         </div>
 
+                        <div class="form-group">
+                            <label>Paper Size</label>
+                            <select id="pageSize">
+                                <option value="">Auto (Scanner Default)</option>
+                                <option value="A4" selected>A4 (210 × 297 mm)</option>
+                                <option value="A3">A3 (297 × 420 mm)</option>
+                                <option value="A5">A5 (148 × 210 mm)</option>
+                                <option value="Letter">Letter (8.5 × 11 in)</option>
+                                <option value="Legal">Legal (8.5 × 14 in)</option>
+                                <option value="B4">B4 (250 × 353 mm)</option>
+                                <option value="B5">B5 (176 × 250 mm)</option>
+                            </select>
+                            <small style="display: block; color: #666; margin-top: 5px;">
+                                📏 Choose paper size for scan area
+                            </small>
+                        </div>
+
                         <div class="form-group" id="jpegQualityGroup">
                             <label>JPEG Quality: <span id="qualityValue">75</span>%</label>
                             <input type="range" id="jpegQuality" min="10" max="100" value="75" step="5"
@@ -639,6 +656,7 @@
             const resolution = parseInt(document.getElementById('resolution').value);
             const colorMode = document.getElementById('colorMode').value;
             const format = document.getElementById('format').value;
+            const pageSize = document.getElementById('pageSize').value;
             const useFeeder = document.getElementById('useFeeder').checked;
             const jpegQuality = parseInt(document.getElementById('jpegQuality').value);
 
@@ -651,8 +669,7 @@
                 resolution: resolution,
                 color_mode: colorMode,
                 format: format,
-                width: 210,
-                height: 297,
+                page_size: pageSize,
                 brightness: 0,
                 contrast: 0,
                 use_duplex: false,

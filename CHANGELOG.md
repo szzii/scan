@@ -1,5 +1,136 @@
 # 更新日志
 
+## v1.0.17 (2025-11-10) - ✨ 新增：可配置纸张大小
+
+### ✨ 新功能
+
+**纸张大小选择器**
+
+参考 NAPS2 实现，添加了可配置的纸张大小功能，用户可以选择标准纸张尺寸来设置扫描区域。
+
+**支持的纸张大小：**
+
+- **A4** (210 × 297 mm) - 默认选项
+- **A3** (297 × 420 mm) - 大幅面
+- **A5** (148 × 210 mm) - 小幅面
+- **Letter** (8.5 × 11 in) - 美国标准
+- **Legal** (8.5 × 14 in) - 美国法律文件
+- **B4** (250 × 353 mm) - JIS B系列
+- **B5** (176 × 250 mm) - JIS B系列
+- **Auto** (Scanner Default) - 使用扫描仪默认尺寸
+
+**实现细节：**
+
+✅ **前端UI** (`dashboard.html:384-399`)
+```html
+<div class="form-group">
+    <label>Paper Size</label>
+    <select id="pageSize">
+        <option value="">Auto (Scanner Default)</option>
+        <option value="A4" selected>A4 (210 × 297 mm)</option>
+        <option value="A3">A3 (297 × 420 mm)</option>
+        <!-- ... 更多选项 -->
+    </select>
+</div>
+```
+
+✅ **表单提交** (`dashboard.html:672`)
+```javascript
+const parameters = {
+    // ... 其他参数
+    page_size: pageSize,  // 传递纸张大小
+    // ...
+};
+```
+
+✅ **SDK支持** (`scanner-sdk.js:178-200`)
+- 添加 `page_size` 参数文档
+- 添加 `jpeg_quality` 参数文档
+- 标记 `width`/`height` 为已弃用，推荐使用 `page_size`
+
+**使用说明：**
+
+1. 在扫描表单中选择纸张大小
+2. 选择"Auto"使用扫描仪默认尺寸
+3. 选择具体尺寸会设置对应的扫描区域
+4. 后端已支持 `page_size` 参数（基于 NAPS2 实现）
+
+**参考实现：**
+- NAPS2.Lib/Scan/ScanProfile.cs (Line 238-263)
+- NAPS2 的 ScanPageSize 枚举定义
+
+### 📦 相关文件
+
+- `web/templates/dashboard.html:384-399` - 纸张大小选择器UI
+- `web/templates/dashboard.html:672` - 表单提交参数
+- `sdk/scanner-sdk.js:178-200` - SDK参数文档更新
+- `pkg/models/scanner.go:93` - 后端PageSize字段
+
+---
+
+## v1.0.16 (2025-11-10) - 🐛 修复：JPEG质量控制在平板扫描模式不生效
+
+### 🐛 Bug修复
+
+**修复JPEG质量控制在平板扫描模式不生效**
+
+**问题描述：**
+用户反馈JPEG质量控制功能不生效。经排查发现：
+- 平板扫描（单页扫描）模式直接使用WIA的SaveFile方法保存图片
+- SaveFile使用WIA的默认JPEG质量，不受用户设置的质量参数控制
+- 只有ADF批量扫描模式会进行后处理并应用质量控制
+
+**修复内容：**
+
+✅ **平板扫描模式添加后处理** (`driver_windows.go:563-582`)
+```go
+// Post-processing: Apply JPEG quality control (same as ADF batch mode)
+if params.MaxQuality || params.JpegQuality > 0 {
+    if err := d.applyImageQuality(filePath, params); err != nil {
+        fmt.Printf("  Warning: Image quality adjustment failed: %v\n", err)
+    }
+}
+```
+
+✅ **修复质量检测逻辑** (`driver_windows.go:1176-1180`)
+
+之前的逻辑：
+```go
+else if params.JpegQuality > 0 && params.JpegQuality != models.DefaultJpegQuality {
+    shouldRecompress = true
+}
+```
+问题：如果用户设置质量为75（默认值），不会触发重压缩
+
+修复后的逻辑：
+```go
+else if params.JpegQuality > 0 {
+    // Always recompress if user specified a quality (even if it's the default 75)
+    // because WIA's SaveFile may use a different default quality
+    shouldRecompress = true
+}
+```
+
+**影响范围：**
+- 平板扫描模式现在会正确应用JPEG质量参数
+- 所有质量值（10-100）都会生效，包括默认值75
+- ADF批量扫描模式不受影响（已经正常工作）
+
+**测试建议：**
+1. 使用平板扫描，设置不同的JPEG质量值（25、50、75、100）
+2. 对比生成文件的大小，应该有明显差异：
+   - 质量25：约200-400KB
+   - 质量50：约400-800KB
+   - 质量75：约800-1.5MB
+   - 质量100：约2-4MB
+
+### 📦 相关文件
+
+- `internal/scanner/driver_windows.go:563-582` - 平板扫描添加后处理
+- `internal/scanner/driver_windows.go:1176-1180` - 修复质量检测逻辑
+
+---
+
 ## v1.0.15 (2025-11-10) - 📊 新增：JPEG图片质量控制
 
 ### ✨ 新功能

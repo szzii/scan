@@ -560,6 +560,27 @@ func (d *WindowsDriver) Scan(ctx context.Context, scannerID string, params model
 		return nil, fmt.Errorf("failed to save image: %w", err)
 	}
 
+	// Post-processing: Apply JPEG quality control (same as ADF batch mode)
+	if params.MaxQuality || params.JpegQuality > 0 {
+		if err := d.applyImageQuality(filePath, params); err != nil {
+			fmt.Printf("  Warning: Image quality adjustment failed: %v\n", err)
+		}
+	}
+
+	// Post-processing: Scale ratio (NAPS2 feature)
+	if params.ScaleRatio > 1 {
+		if err := d.applyScaleRatio(filePath, params.ScaleRatio, params); err != nil {
+			fmt.Printf("  Warning: Scale ratio failed: %v\n", err)
+		}
+	}
+
+	// Post-processing: Crop/stretch to page size (NAPS2 feature)
+	if params.CropToPageSize || params.StretchToPageSize {
+		if err := d.applyCropToPageSize(filePath, params); err != nil {
+			fmt.Printf("  Warning: Crop to page size failed: %v\n", err)
+		}
+	}
+
 	fileInfo, err := os.Stat(filePath)
 	fileSize := int64(0)
 	if err == nil {
@@ -1146,12 +1167,15 @@ func (d *BlankPageDetector) isBlankPage(imagePath string) (bool, error) {
 // applyImageQuality applies quality settings to a saved image
 // Implements NAPS2's image quality control (MaxQuality and JPEG compression)
 func (d *WindowsDriver) applyImageQuality(imagePath string, params models.ScanParams) error {
-	// Only recompress if quality settings differ from default
+	// Recompress if quality settings are specified
+	// This ensures we apply the user's chosen quality instead of WIA's default
 	shouldRecompress := false
 
 	if params.MaxQuality {
 		shouldRecompress = true
-	} else if params.JpegQuality > 0 && params.JpegQuality != models.DefaultJpegQuality {
+	} else if params.JpegQuality > 0 {
+		// Always recompress if user specified a quality (even if it's the default 75)
+		// because WIA's SaveFile may use a different default quality
 		shouldRecompress = true
 	}
 

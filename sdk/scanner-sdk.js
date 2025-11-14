@@ -175,8 +175,10 @@ class ScannerClient {
      * @param {number} parameters.resolution - Resolution in DPI (75, 100, 150, 200, 300, 600)
      * @param {string} parameters.color_mode - Color mode (Color, Grayscale, BlackAndWhite)
      * @param {string} parameters.format - Output format (JPEG, PNG, TIFF, BMP, PDF)
-     * @param {number} parameters.width - Width in mm (default: 210)
-     * @param {number} parameters.height - Height in mm (default: 297)
+     * @param {string} parameters.page_size - Paper size (A4, A3, A5, Letter, Legal, B4, B5) (optional)
+     * @param {number} parameters.jpeg_quality - JPEG quality 10-100 (default: 75)
+     * @param {number} parameters.width - Width in mm (deprecated, use page_size)
+     * @param {number} parameters.height - Height in mm (deprecated, use page_size)
      * @param {boolean} parameters.use_feeder - Use ADF (default: false)
      * @param {boolean} parameters.use_duplex - Use duplex (default: false)
      * @param {number} parameters.page_count - Number of pages (default: 1)
@@ -194,6 +196,8 @@ class ScannerClient {
                     resolution: parameters.resolution || 300,
                     color_mode: parameters.color_mode || 'Color',
                     format: parameters.format || 'JPEG',
+                    page_size: parameters.page_size || '',
+                    jpeg_quality: parameters.jpeg_quality || 75,
                     width: parameters.width || 210,
                     height: parameters.height || 297,
                     brightness: parameters.brightness || 0,
